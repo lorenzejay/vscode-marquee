@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useCallback, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useCallback, useState, MouseEvent, useRef } from 'react'
 import {
   Grid,
   IconButton,
@@ -6,7 +6,9 @@ import {
   TextField,
   Button,
   Dialog,
+  Popover,
 } from '@mui/material'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 
 import { AddCircle, Clear } from '@mui/icons-material'
 import LinkIcon from '@mui/icons-material/Link'
@@ -226,6 +228,30 @@ let Snippets = () => {
   const eventListener = getEventListener<Events>(WIDGET_ID)
   const [fullscreenMode, setFullscreenMode] = useState(false)
   const { snippets, snippetSelected} = useContext(SnippetContext)
+  const [minimizeNavIcon, setMinimizeNavIcon] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const [anchorEl, setAnchorEl] = useState(null as (HTMLButtonElement | null))
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleToggleFullScreen = () => {
+    setFullscreenMode(!fullscreenMode)
+    handleClose()
+  }
+  const open = Boolean(anchorEl)
+  const id = open ? 'todo-nav-popover' : undefined
+
+  useEffect(() => {
+    if ((ref !== null && ref.current !== null) && ref.current?.offsetWidth < 330) {
+      return setMinimizeNavIcon(true)
+    }
+    setMinimizeNavIcon(false)
+  }, [ref.current?.offsetWidth])
 
   const snippet = useMemo(() => {
     return snippets.find((snippet) => snippet.id === snippetSelected)
@@ -239,7 +265,7 @@ let Snippets = () => {
 
   if(!fullscreenMode){
     return (
-      <>
+      <div ref={ref} style={{ height: '100%', display: 'flex', flexDirection:'column'}}>
         <HeaderWrapper>
           <>
             <Grid item>
@@ -266,34 +292,79 @@ let Snippets = () => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item>
-              <Grid container direction="row" spacing={1} alignItems="center">
-                <Grid item>
-                  <IconButton
-                    size="small"
-                    onClick={() => eventListener.emit('openSnippet', '/New Snippet')}
-                  >
-                    <AddCircle fontSize="small" />
-                  </IconButton>
-                </Grid>
-                <Grid item>
-                  <DoubleClickHelper content="Double-click a snippet title to edit and right-click for copy & paste" />
-                </Grid>
-                <Grid item>
-                  <HidePop name="snippets" />
-                </Grid>
-                <Grid item>
-                  <ToggleFullScreen toggleFullScreen={setFullscreenMode} isFullScreenMode={fullscreenMode} />
-                </Grid>
-                <Grid item>
-                  <Dragger />
+            {!minimizeNavIcon && 
+              <Grid item>
+                <Grid container direction="row" spacing={1} alignItems="center">
+                  <Grid item>
+                    <IconButton
+                      size="small"
+                      onClick={() => eventListener.emit('openSnippet', '/New Snippet')}
+                    >
+                      <AddCircle fontSize="small" />
+                    </IconButton>
+                  </Grid>
+                  <Grid item>
+                    <DoubleClickHelper 
+                      content="Double-click a snippet title to edit and right-click for copy & paste" 
+                    />
+                  </Grid>
+                  <Grid item>
+                    <HidePop name="snippets" />
+                  </Grid>
+                  <Grid item>
+                    <ToggleFullScreen toggleFullScreen={handleToggleFullScreen} isFullScreenMode={fullscreenMode} />
+                  </Grid>
+                  <Grid item>
+                    <Dragger />
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
+            }
+            {minimizeNavIcon &&
+              <Grid item xs={8}>
+                <Grid container justifyContent="right" direction="row" spacing={1}>
+                  <Grid item>
+                    <IconButton onClick={handleClick}>
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton> 
+                    <Popover 
+                      open={open} 
+                      id={id} 
+                      anchorEl={anchorEl} 
+                      onClose={handleClose} 
+                      anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    >
+                      <Grid item>
+                        <IconButton
+                          size="small"
+                          onClick={() => eventListener.emit('openSnippet', '/New Snippet')}
+                        >
+                          <AddCircle fontSize="small" />
+                        </IconButton>
+                      </Grid>
+                      <Grid item>
+                        <DoubleClickHelper 
+                          content="Double-click a snippet title to edit and right-click for copy & paste" 
+                        />
+                      </Grid>
+                      <Grid item>
+                        <HidePop name="snippets" />
+                      </Grid>
+                      <Grid item>
+                        <ToggleFullScreen toggleFullScreen={handleToggleFullScreen} isFullScreenMode={fullscreenMode} />
+                      </Grid>
+                      <Grid item>
+                        <Dragger />
+                      </Grid>
+                    </Popover>
+                  </Grid>
+                </Grid>
+              </Grid>
+            }
           </>
         </HeaderWrapper>
         <WidgetBody snippet={snippet} snippets={snippets}/>
-      </>
+      </div>
     )
   }
   return (
@@ -341,7 +412,7 @@ let Snippets = () => {
                 <HidePop name="snippets" />
               </Grid>
               <Grid item>
-                <ToggleFullScreen toggleFullScreen={setFullscreenMode} isFullScreenMode={fullscreenMode} />
+                <ToggleFullScreen toggleFullScreen={handleToggleFullScreen} isFullScreenMode={fullscreenMode} />
               </Grid>
               <Grid item>
                 <Dragger />

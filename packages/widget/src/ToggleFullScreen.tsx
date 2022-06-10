@@ -7,11 +7,11 @@ import { faClose } from '@fortawesome/free-solid-svg-icons'
 
 interface ToggleFSProps {
   isFullScreenMode: boolean, 
-  toggleFullScreen: React.Dispatch<React.SetStateAction<boolean>>
+  toggleFullScreen: () => void
 }
 let ToggleFullScreen = ({ isFullScreenMode, toggleFullScreen } : ToggleFSProps) => {
   return (
-    <IconButton focusRipple={false} onClick={() => toggleFullScreen(!isFullScreenMode)}>
+    <IconButton focusRipple={false} onClick={toggleFullScreen}>
       {!isFullScreenMode && <FontAwesomeIcon icon={faExpand} fontSize='small' />}
       {isFullScreenMode && <FontAwesomeIcon icon={faClose} fontSize='small' />}
     </IconButton>
